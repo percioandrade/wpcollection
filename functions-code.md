@@ -12,13 +12,18 @@ Place it on functions.php or create a new plugin for this.
 
 #### 1: Filters
 
+``
 /* Enable shortcode in menu ---------- */
-``add_filter('wp_nav_menu_items', 'do_shortcode');``
+add_filter('wp_nav_menu_items', 'do_shortcode');
+``
 
+``
 /*  Enable logout url masked eg: /$VALUE=1 ---------- */
-``add_filter('logout_url', 'custom_logout_url', 10, 2);
-add_action('wp_loaded', 'custom_logout_action');``
+add_filter('logout_url', 'custom_logout_url', 10, 2);
+add_action('wp_loaded', 'custom_logout_action');
+``
 
+``
 /* Custom logout URL ---------- */
 function custom_logout_url($logout_url, $redirect){
     $url = add_query_arg('NEW_VALUE', 1, home_url()); // example: bye
@@ -28,7 +33,9 @@ function custom_logout_url($logout_url, $redirect){
     return esc_url( $url );
 }
 add_filter( 'logout_url', 'custom_logout_url', 10, 2 );
+``
 
+``
 /* Custom logout URL redirection ---------- */
 function custom_logout_action(){
     $user_id = get_current_user_id();
@@ -40,8 +47,10 @@ function custom_logout_action(){
     }
 }
 add_action( 'template_redirect', 'custom_logout_action' );
+``
 
-/* WordPress - Remove emojis ---------- */
+``
+/* Remove emojis ---------- */
 function remove_emoji(){
     remove_action( 'wp_head', 'print_emoji_detection_script', 10 );
     remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
@@ -51,7 +60,9 @@ function remove_emoji(){
     remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
 }
 add_action( 'init', 'remove_emoji' );
+``
 
+``
 /* Remove amp validation ---------- */
 add_filter(
     'amp_validation_error_sanitized',
@@ -62,7 +73,9 @@ add_filter(
     10,
     2
 );
+``
 
+``
 /* Change author base url: domain/author to your domain/$NEW_SLUG ---------- */
 function wp_custom_author_urlbase($wp_rewrite){
     global $wp_rewrite;
@@ -70,8 +83,10 @@ function wp_custom_author_urlbase($wp_rewrite){
     $wp_rewrite->author_base = $author_slug;
     flush_rewrite_rules();
 }
-add_action( 'init', 'wp_custom_author_urlbase' );
+add_action('init', 'wp_custom_author_urlbase');
+``
 
+``
 /* Limit access to media library ( users can only see/select own media ) ---------- */
 function wpsnippet_show_current_user_attachments( $query ){
     $user_id = get_current_user_id();
@@ -81,7 +96,9 @@ function wpsnippet_show_current_user_attachments( $query ){
     return $query;
 }
 add_filter( 'ajax_query_attachments_args', 'wpsnippet_show_current_user_attachments' );
+``
 
+``
 /* Change query search 's' to other value ---------- */
 add_action('init', function(){
     add_rewrite_tag('%search_query%', '([^&]+)');
@@ -95,7 +112,9 @@ add_filter('request', function($request){
     }
     return $request;
 } );
+``
 
+``
 /* Disable default search on WordPress ---------- */
 add_action( 'init', function(){
     add_rewrite_tag( '%search_query%', '([^&]+)');
@@ -110,8 +129,10 @@ add_filter('request', function( $request){
 
     return $request;
 });
+``
 
-/* Remove WP version from css & scripts ---------- */
+``
+/* Remove version from css & scripts ---------- */
 function my_remove_wp_ver_css_js($src){
     if(strpos($src, 'ver=')){
         $src = remove_query_arg('ver', $src);
@@ -120,31 +141,47 @@ function my_remove_wp_ver_css_js($src){
 }
 add_filter('style_loader_src', 'my_remove_wp_ver_css_js', 9999);
 add_filter('script_loader_src', 'my_remove_wp_ver_css_js', 9999);
+``
 
-* Remove WP version from RSS ---------- */
+``
+/* Remove WP version from RSS ---------- */
 add_filter('the_generator', '__return_empty_string');
+``
 
-/* Remove Admin Bar  ---------- */
+``
+/* Remove admin bar  ---------- */
 add_filter('show_admin_bar', '__return_false');
+``
 
+``
 /* Remove WP version from head ---------- */
 remove_action('wp_head', 'wp_generator');
+``
 
+``
 /* Disable Gutemberg  ---------- */
 add_filter('use_block_editor_for_post', '__return_false');
+``
 
-/* WordPress - Disable FontAwesome ---------- */
+``
+/* Disable FontAwesome ---------- */
 add_action('wp_enqueue_scripts', function(){ wp_dequeue_style('font-awesome'); }, 50);
+``
 
-/* To remove the Font Awesome http request as well on elementor  ---------- */
+``
+/* Remove the Font Awesome http request as well on elementor  ---------- */
 add_action('elementor/frontend/after_enqueue_styles', function (){ wp_dequeue_style('font-awesome');});
+``
 
+``
 /* Remove Gutenberg block library CSS ---------- */
 function remove_wp_block_library_css(){
     wp_dequeue_style(array('wp-block-library', 'wp-block-library-theme', 'wc-block-style', 'global-styles'));
 }
 add_action('wp_enqueue_scripts', 'remove_wp_block_library_css');
+``
 
+``
 /* Clean WordPress ---------- */
 final class remove_trash_wp {
     public function __construct(){
@@ -167,10 +204,14 @@ final class remove_trash_wp {
     remove_action( 'welcome_panel', 'wp_welcome_panel');
     }
 }
+``
 
-/* WordPress - Enable WEBP in Media ---------- */
+``
+/* Enable WEBP in Media ---------- */
 add_filter('mime_types', function($mimes){ $mimes['webp'] = 'image/webp'; return $mimes;});
+``
 
+``
 /*  Enable preview for webp image files ---------- */
 function webp_is_displayable($result, $path){
     if($result === false){
@@ -185,10 +226,14 @@ function webp_is_displayable($result, $path){
     return $result;
 }
 add_filter('file_is_displayable_image', 'webp_is_displayable', 10, 2);
+``
 
+``
 /* Enable RSS on Header ---------- */
 add_theme_support('automatic-feed-links');
+``
 
+``
 /* Hide admin ajax from no-admin users ---------- */
 function redirect_non_admin_users(){
     // Check if user is not an admin and not accessing admin-ajax.php
@@ -199,13 +244,17 @@ function redirect_non_admin_users(){
     }
 }
 add_action('admin_init', 'redirect_non_admin_users');
+``
 
+``
 /* Change footer name ---------- */
 function replace_footer_text(){
     echo 'YOUR NEW FOOTER';
 }
 add_action('admin_footer_text', 'replace_footer_text');
+``
 
+``
 /* Prevent upload from no staff users ---------- */
 function pws_block_admin(){
     if(
@@ -225,7 +274,9 @@ function pws_block_admin(){
     }
 }
 add_action('admin_init', 'pws_block_admin', 0);
+``
 
+``
 /* Remove default inclusion of jQuery and jQuery Migrate ---------- */
 function remove_default_jquery(){
     if(!is_admin()){
@@ -234,8 +285,10 @@ function remove_default_jquery(){
     }
 }
 add_action('wp_enqueue_scripts', 'remove_default_jquery');
+``
 
-// Include jQuery and jQuery Migrate in the footer ---------- */
+``
+/* Include jQuery and jQuery Migrate in the footer ---------- */
 function include_jquery_in_footer() {
     if(!is_admin()){
         wp_enqueue_script('jquery', 'https://code.jquery.com/jquery-3.6.0.min.js', array(), null, true);
@@ -243,10 +296,11 @@ function include_jquery_in_footer() {
     }
 }
 add_action('wp_enqueue_scripts', 'include_jquery_in_footer');
-
+``
 
 #### 2: Actions
 
+``
 /* Add custom js external scripts ---------- */
 function add_scripts(){
 
@@ -261,8 +315,9 @@ function add_scripts(){
 
 }
 add_action( 'wp_enqueue_scripts', 'add_scripts' );
+``
 
-
+``
 /* Insert tags on body ---------- */
 function tags_body() { ?>
 
@@ -270,5 +325,8 @@ Insert here the code you want, Google ADS, Analytic etc
 
 <?php }
 add_action('wp_footer', 'tags_body');
+``
 
 #### 3: Shortcodes
+
+Soon
