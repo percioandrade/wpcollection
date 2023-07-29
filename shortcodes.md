@@ -144,18 +144,19 @@ Place it on functions.php or create a new plugin for this.
     add_shortcode('user_url', 'user_url');
 
 **Generate a url from random post - Usage: [random_post]**
-function random_post(){
-    ob_start();
-    $random_post = get_posts(array(
-        'post_type'      => 'post',  // substitua 'post' pelo tipo de postagem que deseja usar
-        'orderby'        => 'rand',
-        'posts_per_page' => 1,
-        'post_status'    => 'publish'
-    ));
-    if ($random_post){
-        $permalink = get_permalink($random_post[0]->ID);
-        echo $permalink;
+
+    function random_post(){
+        ob_start();
+        $random_post = get_posts(array(
+            'post_type'      => 'post',  // substitua 'post' pelo tipo de postagem que deseja usar
+            'orderby'        => 'rand',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish'
+        ));
+        if ($random_post){
+            $permalink = get_permalink($random_post[0]->ID);
+            echo $permalink;
+        }
+        return ob_get_clean();
     }
-    return ob_get_clean();
-}
-add_shortcode('random_post', 'random_post');
+    add_shortcode('random_post', 'random_post');
