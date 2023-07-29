@@ -1,4 +1,4 @@
-# Actions codes for you WordPress
+# Shortcode codes for you WordPress
 
 Place it on functions.php or create a new plugin for this.
 
