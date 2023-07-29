@@ -13,11 +13,11 @@ Place it on functions.php or create a new plugin for this.
 #### 1: Filters
 
 /* Enable shortcode in menu ---------- */
-add_filter('wp_nav_menu_items', 'do_shortcode');
+``add_filter('wp_nav_menu_items', 'do_shortcode');``
 
 /*  Enable logout url masked eg: /$VALUE=1 ---------- */
-add_filter('logout_url', 'custom_logout_url', 10, 2);
-add_action('wp_loaded', 'custom_logout_action');
+``add_filter('logout_url', 'custom_logout_url', 10, 2);
+add_action('wp_loaded', 'custom_logout_action');``
 
 /* Custom logout URL ---------- */
 function custom_logout_url($logout_url, $redirect){
