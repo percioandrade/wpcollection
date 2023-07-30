@@ -2,53 +2,55 @@
 
 Place it on functions.php or create a new plugin for this.
 
+- Changelog
+-- 1.0: Started
+-- 1.1: Codes updated to use fn() introduced on PHP 7.4
+
 **WordPress - Remove emojis**
 
-	function remove_emoji(){
+	add_action('init', fn() => {
 		remove_action('wp_head', 'print_emoji_detection_script', 10);
 		remove_action('admin_print_scripts', 'print_emoji_detection_script');
 		remove_action('admin_print_styles', 'print_emoji_styles');
 		remove_filter('the_content_feed', 'wp_staticize_emoji');
 		remove_filter('comment_text_rss', 'wp_staticize_emoji');
 		remove_filter('wp_mail', 'wp_staticize_emoji_for_email');
-	}
-	add_action('init', 'remove_emoji');
+	});
 
 **WordPress - Change author base url: domain/author to your domain/$NEW_SLUG**
 
-	function wp_custom_author_urlbase($wp_rewrite){
-		global $wp_rewrite;
+	function wp_custom_author_urlbase($wp_rewrite) {
 		$author_slug = 'NEW_SLUG'; // the new slug name
 		$wp_rewrite->author_base = $author_slug;
-		flush_rewrite_rules();
+		$wp_rewrite->flush_rules(); // Use flush_rules() instead of flush_rewrite_rules()
 	}
 	add_action('init', 'wp_custom_author_urlbase');
 
 **WordPress - Change query search 's' to other value**
 
-	add_action('init', function(){
+	add_action('init', fn() => {
 		add_rewrite_tag('%search_query%', '([^&]+)');
 		remove_query_arg('s');
 	});
 
-	add_filter('request', function($request){
-		if(isset($_REQUEST['search'])){
-			$search_query = sanitize_text_field($_REQUEST['search']);
+	add_filter('request', fn($request) => {
+		if (isset($request['search_query'])) {
+			$search_query = sanitize_text_field($request['search_query']);
 			$request['s'] = $search_query;
 		}
 		return $request;
-	} );
+	});
 
 **WordPress - Disable default search on WordPress**
 
-	add_action('init', function(){
+	add_action('init', fn() => {
 		add_rewrite_tag('%search_query%', '([^&]+)');
 		remove_query_arg('s');
 	});
 
-	add_filter('request', function($request){
-		if(isset($_REQUEST['search'])){
-			$search_query = sanitize_text_field($_REQUEST['search']);
+	add_filter('request', fn($request) => {
+		if (isset($_GET['search'])) {
+			$search_query = sanitize_text_field($_GET['search']);
 			$request['s'] = $search_query;
 		}
 
@@ -57,22 +59,23 @@ Place it on functions.php or create a new plugin for this.
 
 **WordPress - Remove WP version from head**
 
-	remove_action('wp_head', 'wp_generator');
+	add_action('init', fn() => {
+		remove_action('wp_head', 'wp_generator');
+	});
 
 **WordPress - Disable FontAwesome**
 
-	add_action('wp_enqueue_scripts', function(){ wp_dequeue_style('font-awesome'); }, 50);
+	add_action('wp_enqueue_scripts', fn() => wp_dequeue_style('font-awesome'), 50);
 
 **WordPress - Remove the Font Awesome http request as well on elementor**
 
-	add_action('elementor/frontend/after_enqueue_styles', function (){ wp_dequeue_style('font-awesome');});
+	add_action('elementor/frontend/after_enqueue_styles', fn() => wp_dequeue_style('font-awesome'));
 
 **WordPress - Remove Gutenberg block library CSS**
 
-	function remove_wp_block_library_css(){
+	add_action('wp_enqueue_scripts', fn() => {
 		wp_dequeue_style(array('wp-block-library', 'wp-block-library-theme', 'wc-block-style', 'global-styles'));
-	}
-	add_action('wp_enqueue_scripts', 'remove_wp_block_library_css');
+	});
 
 **Theme - Enable RSS on Header**
 
@@ -80,108 +83,89 @@ Place it on functions.php or create a new plugin for this.
 
 **WordPress - Hide admin ajax from no-admin users**
 
-	function redirect_non_admin_users(){
-		// Check if user is not an admin and not accessing admin-ajax.php
-		if( ! current_user_can('manage_options') && '/wp-admin/admin-ajax.php' !== $_SERVER['PHP_SELF']){
-			// Redirect user to homepage
+	add_action('admin_init', fn() => {
+		if (!current_user_can('manage_options') && !is_admin()) {
 			wp_redirect(home_url());
 			exit;
 		}
-	}
-	add_action('admin_init', 'redirect_non_admin_users');
+	});
 
 **WordPress - Change footer text**
 
-	function replace_footer_text(){
-		echo 'YOUR NEW FOOTER';
-	}
-	add_action('admin_footer_text', 'replace_footer_text');
+	add_action('admin_footer_text', fn() => echo 'YOUR NEW FOOTER';);
 
 **WordPress - Prevent upload from no staff users**
 
-	function pws_block_admin(){
-		if(
-			// Look for the presence of /wp-admin/ in the url
-			stripos($_SERVER['REQUEST_URI'],'/wp-admin/') !== false
-			&&
-			// Allow calls to async-upload.php
-			stripos($_SERVER['REQUEST_URI'],'async-upload.php') === false
-			&&
-			// Allow calls to admin-ajax.php
-			stripos($_SERVER['REQUEST_URI'],'admin-ajax.php') === false
-			){
-				if(!current_user_can('manage_options')){
-				$redirect_to = home_url();
-				wp_redirect($redirect_to, 302);
-			}
+	function pws_block_admin() {
+		$request_uri = $_SERVER['REQUEST_URI'];
+
+		if (
+			stripos($request_uri, '/wp-admin/') !== false &&
+			stripos($request_uri, 'async-upload.php') === false &&
+			stripos($request_uri, 'admin-ajax.php') === false &&
+			!current_user_can('manage_options')
+		) {
+			wp_safe_redirect(home_url(), 302);
+			exit;
 		}
 	}
 	add_action('admin_init', 'pws_block_admin', 0);
 
 **WordPress - Remove default inclusion of jQuery and jQuery Migrate**
 
-	function remove_default_jquery(){
-		if(!is_admin()){
+	add_action('wp_enqueue_scripts', fn() => {
+		if (!is_admin()) {
 			wp_deregister_script('jquery');
 			wp_deregister_script('jquery-migrate');
 		}
-	}
-	add_action('wp_enqueue_scripts', 'remove_default_jquery');
+	});
 
 **WordPress - Include jQuery and jQuery Migrate in the footer**
 
-	function include_jquery_in_footer(){
-		if(!is_admin()){
-			wp_enqueue_script('jquery', 'https://code.jquery.com/jquery-3.6.0.min.js', array(), null, true);
-			wp_enqueue_script('jquery-migrate', 'https://code.jquery.com/jquery-migrate-3.3.2.min.js', array('jquery'), null, true);
+	function include_jquery_in_footer() {
+		if (!is_admin()) {
+			wp_enqueue_script('jquery', 'https://code.jquery.com/jquery-3.6.0.min.js', array(), '3.6.0', true);
+			wp_enqueue_script('jquery-migrate', 'https://code.jquery.com/jquery-migrate-3.3.2.min.js', array('jquery'), '3.3.2', true);
 		}
 	}
 	add_action('wp_enqueue_scripts', 'include_jquery_in_footer');
 
 **WordPress - Add custom js external scripts**
 
-	function add_scripts(){
-		// Use this for javascripts
-		wp_enqueue_script('example-name', 'external_url', array(), null, true);
-		
-		// Use this for css scripts
-		wp_register_style('example-name', 'external_url', array(), '1.0');
-		
-		// Enable css scripts
-		wp_enqueue_style('example-name');
+	function add_scripts() {
+		// Enqueue JavaScript
+		wp_enqueue_script('example-js', 'https://example.com/js/example.js', array(), '1.0', true);
+
+		// Enqueue CSS styles
+		wp_enqueue_style('example-css', 'https://example.com/css/example.css', array(), '1.0');
 	}
 	add_action('wp_enqueue_scripts', 'add_scripts');
 
 **WordPress - Insert tags on body**
 
-	function tags_body(){ ?>
-
-	Insert here the code you want, Google ADS, Analytic etc
-
-	<?php }
-	add_action('wp_footer', 'tags_body');
+add_action('wp_footer', fn() => {
+    // Insert here the code you want, Google Ads, Analytics, etc
+});
 
 **Elementor - Remove Font Awesome**
 
-	add_action('elementor/frontend/after_register_styles',function(){
-		foreach( [ 'solid', 'regular', 'brands' ] as $style){
+	add_action('elementor/frontend/after_register_styles', fn() => {
+		foreach (['solid', 'regular', 'brands'] as $style) {
 			wp_deregister_style('elementor-icons-fa-' . $style);
 		}
 	}, 20);
 
 **Elementor - Remove Eicons in Elementor**
 
-	function disable_eicons(){
+	add_action('wp_enqueue_scripts', fn() => {
 		wp_dequeue_style('elementor-icons');
 		wp_deregister_style('elementor-icons');
-	}
-	add_action('wp_enqueue_scripts', 'disable_eicons', 11);
+	}, 11);
 
 **Elementor - Remove Animations**
 
-	function remove_animation(){
+	add_action('wp_enqueue_scripts', fn() => {
 		wp_deregister_style('elementor-animations');
 		wp_dequeue_style('elementor-animations');
 		wp_dequeue_style('elementor-frontend');
-	}
-	add_action('wp_enqueue_scripts', 'remove_animation', 100);
+	}, 100);

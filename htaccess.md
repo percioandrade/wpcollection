@@ -18,135 +18,93 @@ Place it on functions.php or create a new plugin for this.
 **Remove X-Powered-By and others values to avoid sniffing**
 
     <IfModule mod_headers.c>
-            Header unset X-Powered-By
-            Header unset Server
-            Header unset X-Pingback
-            Header set Cross-Origin-Embedder-Policy "unsafe-none"
-            Header set Cross-Origin-Opener-Policy "unsafe-none"
+        Header always unset X-Powered-By
+        Header always unset Server
+        Header always unset X-Pingback
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://example.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        Header always set Feature-Policy "geolocation 'none'; microphone 'none'; camera 'none'"
+        Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
     </IfModule>
 
 **Disable XMLRCP**
 
     <Files xmlrpc.php>
-        order deny,allow
-        deny from all
-        allow from none
+        Require all denied
     </Files>
+
 
 **Enable deflate on files**
 
     <IfModule mod_deflate.c>
-        AddOutputFilterByType DEFLATE text/html
-        AddOutputFilterByType DEFLATE text/css
-        AddOutputFilterByType DEFLATE text/javascript
-        AddOutputFilterByType DEFLATE text/xml
-        AddOutputFilterByType DEFLATE text/plain
-        AddOutputFilterByType DEFLATE image/x-icon
-        AddOutputFilterByType DEFLATE image/svg+xml
-        AddOutputFilterByType DEFLATE application/rss+xml
-        AddOutputFilterByType DEFLATE application/javascript
-        AddOutputFilterByType DEFLATE application/x-javascript
-        AddOutputFilterByType DEFLATE application/xml
-        AddOutputFilterByType DEFLATE application/xhtml+xml
-        AddOutputFilterByType DEFLATE application/x-font
-        AddOutputFilterByType DEFLATE application/x-font-truetype
-        AddOutputFilterByType DEFLATE application/x-font-ttf
-        AddOutputFilterByType DEFLATE application/x-font-otf
-        AddOutputFilterByType DEFLATE application/x-font-opentype
-        AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
-        AddOutputFilterByType DEFLATE font/ttf
-        AddOutputFilterByType DEFLATE font/otf
-        AddOutputFilterByType DEFLATE font/opentype
-    # For Older Browsers Which Can't Handle Compression
-        BrowserMatch ^Mozilla/4 gzip-only-text/html
-        BrowserMatch ^Mozilla/4\.0[678] no-gzip
-        BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+        # Enable compression for the specified MIME types
+        AddOutputFilterByType DEFLATE text/html text/css text/javascript text/xml text/plain image/x-icon image/svg+xml application/rss+xml application/javascript application/x-javascript application/xml application/xhtml+xml application/x-font application/x-font-truetype application/x-font-ttf application/x-font-otf application/x-font-opentype application/vnd.ms-fontobject font/ttf font/otf font/opentype
+        
+        # Set the compression level (choose from 1 to 9, where 9 is the highest compression)
+        DeflateCompressionLevel 6
     </IfModule>
-    <ifModule mod_gzip.c>
-        mod_gzip_on Yes
-        mod_gzip_dechunk Yes
-        mod_gzip_item_include file \.(html?|txt|css|js|php|pl)$
-        mod_gzip_item_include mime ^application/x-javascript.*
-        mod_gzip_item_include mime ^text/.*
-        mod_gzip_item_exclude rspheader ^Content-Encoding:.*gzip.*
-        mod_gzip_item_exclude mime ^image/.*
-        mod_gzip_item_include handler ^cgi-script$
-    </ifModule>
+
 
 **Disable files in include**
 
     <IfModule mod_rewrite.c>
         RewriteEngine On
         RewriteBase /
-        RewriteRule ^wp-admin/includes/ - [F,L]
-        RewriteRule !^wp-includes/ - [S=3]
-        RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
-        RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
-        RewriteRule ^wp-includes/theme-compat/ - [F,L]
+
+        # Block direct access to sensitive directories
+        RewriteRule ^wp-admin/includes/ - [F,NC]
+        RewriteRule ^wp-includes/ - [F,NC]
+
+        # Block direct access to PHP files in wp-includes
+        RewriteRule ^wp-includes/.+\.php$ - [F,NC]
+
+        # Block direct access to language files in wp-includes/js/tinymce/langs
+        RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,NC]
+
+        # Block direct access to theme-compat directory
+        RewriteRule ^wp-includes/theme-compat/ - [F,NC]
     </IfModule>
+
 
 **Protect System Files**
 
-    <files .htaccess>
-        <IfModule mod_authz_core.c>
+    <IfModule mod_authz_core.c>
+        <FilesMatch "(^\.htaccess|readme\.(html|txt)|wp-config\.php)$">
             Require all denied
-        </IfModule>
-        <IfModule !mod_authz_core.c>
+        </FilesMatch>
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        <FilesMatch "(^\.htaccess|readme\.(html|txt)|wp-config\.php)$">
             Order allow,deny
             Deny from all
-        </IfModule>
-    </files>
-    <files readme.html>
-        <IfModule mod_authz_core.c>
-            Require all denied
-        </IfModule>
-        <IfModule !mod_authz_core.c>
-            Order allow,deny
-            Deny from all
-        </IfModule>
-    </files>
-    <files readme.txt>
-        <IfModule mod_authz_core.c>
-            Require all denied
-        </IfModule>
-        <IfModule !mod_authz_core.c>
-            Order allow,deny
-            Deny from all
-        </IfModule>
-    </files>
-    <files wp-config.php>
-        <IfModule mod_authz_core.c>
-            Require all denied
-        </IfModule>
-        <IfModule !mod_authz_core.c>
-            Order allow,deny
-            Deny from all
-        </IfModule>
-    </files>
+        </FilesMatch>
+    </IfModule>
 
 **Disable PHP in Uploads**
 
     <IfModule mod_rewrite.c>
-        RewriteRule ^wp\-content/uploads/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [NC,F]
+        RewriteRule ^wp-content/uploads/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [F]
     </IfModule>
 
 **Disable PHP in Plugins**
 
     <IfModule mod_rewrite.c>
-        RewriteRule ^wp\-content/plugins/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [NC,F]
+        RewriteRule ^wp-content/plugins/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [F]
     </IfModule>
 
 **Disable PHP in Themes**
 
     <IfModule mod_rewrite.c>
-        RewriteRule ^wp\-content/themes/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [NC,F]
+        RewriteRule ^wp-content/themes/.*\.(?:php[1-7]?|pht|phtml?|phps)\.?$ - [F]
     </IfModule>
 
 **Filter Request Methods**
 
     <IfModule mod_rewrite.c>
-        RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) [NC]
-        RewriteRule ^.* - [F]
+        RewriteRule ^(TRACE|TRACK) - [F]
     </IfModule>
 
 **Filter Suspicious Query Strings in the URL**
