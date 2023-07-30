@@ -308,6 +308,53 @@ Place it on functions.php or create a new plugin for this.
 	// Hook the function to the 'admin_bar_menu' action with a priority of 999999
 	add_action('admin_bar_menu', 'customize_admin_bar_for_non_admins', 999999);
 
+**Protects the WordPress login page from brute force attacks and various login attempts**
+
+	// Block direct access to the plugin file
+	defined('ABSPATH') or die('No script kiddies please!');
+
+	// Hook into the login form to add login protection
+	add_action('login_init', 'custom_login_security');
+
+	function custom_login_security() {
+		// Set the maximum number of login attempts allowed
+		$max_attempts = 5;
+
+		// Set the duration (in seconds) to lock out login attempts
+		$lockout_duration = 600; // 10 minutes
+
+		// Get the user's IP address
+		$user_ip = $_SERVER['REMOTE_ADDR'];
+
+		// Check if the user has exceeded the maximum number of login attempts
+		$login_attempts = get_transient('custom_login_attempts_' . $user_ip);
+
+		if ($login_attempts >= $max_attempts) {
+			// User has exceeded the maximum login attempts, block further attempts
+			header('HTTP/1.1 403 Forbidden');
+			die('Too many login attempts. Please try again later.');
+		}
+	}
+
+	// Hook into the authentication process to count login attempts
+	add_filter('wp_authenticate_user', 'custom_track_login_attempts', 10, 2);
+
+	function custom_track_login_attempts($user, $username) {
+		// Get the user's IP address
+		$user_ip = $_SERVER['REMOTE_ADDR'];
+
+		// Get the current login attempts count
+		$login_attempts = get_transient('custom_login_attempts_' . $user_ip);
+
+		// Increase the login attempts count
+		$login_attempts = ($login_attempts) ? $login_attempts + 1 : 1;
+
+		// Save the new login attempts count with a lockout duration
+		set_transient('custom_login_attempts_' . $user_ip, $login_attempts, $lockout_duration);
+
+		return $user;
+	}
+
 **Elementor - Remove Google Fonts in Elementor**
 
 	add_filter('elementor/frontend/print_google_fonts', fn() => false);
