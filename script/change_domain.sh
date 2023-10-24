@@ -9,6 +9,8 @@
 #   - Initial Release
 # 1.1
 #   - Changes in code
+# 1.2
+#   - I commented the script in the DUMP part sorry about that :|
 ##################################################################
 
 function display_help() {
@@ -112,10 +114,10 @@ if [[ " $* " == *" -s "* || " $* " == *" --skip "* ]]; then
     echo '[!] Skip database used, we will not generate a backup'
 else
     # Generate a database dump using the determined prefix
-    #DUMP_FILE="${PREFIX}db_backup_$(date +%Y%m%d%H%M%S).sql"
-    #mysqldump -u "${DB_USER}" -p"${DB_PASS}" -h "${DB_HOST}" "${DATABASE}" > "${DUMP_FILE}"
+    DUMP_FILE="${PREFIX}db_backup_$(date +%Y%m%d%H%M%S).sql"
+    mysqldump -u "${DB_USER}" -p"${DB_PASS}" -h "${DB_HOST}" "${DATABASE}" > "${DUMP_FILE}"
     echo '[!] Dumping database, please wait...'
-    #echo '[+] Database dump created on: '$(pwd)/${DUMP_FILE}''
+    echo '[+] Database dump created on: '$(pwd)/${DUMP_FILE}''
 fi
 
 echo $'[!] Please insert the new domain. Example: domain.com.br )\n'
